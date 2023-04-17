@@ -1,0 +1,93 @@
+import 'dart:async';
+import 'dart:math';
+
+class Filosofo {
+  //Clase filosofos
+  int id;
+  String Nombre;
+  int Comida;
+  Tenedor TenedorIzquierdo;
+  Tenedor TenedorDerecho;
+
+  Filosofo(this.id, this.Nombre, this.Comida, this.TenedorIzquierdo,
+      this.TenedorDerecho); //Constructor de la clase filosofos
+
+  Future<void> Comer() async {
+    //Funcion asincrona Comer
+    while (Comida > 0) {
+      print('$Nombre esta pensando'); //Filosofo pensando, inicio de la funcion
+      await Future.delayed(Duration(
+          milliseconds: Random().nextInt(500))); //permite iniciar la comedera
+
+      await TenedorIzquierdo.acquire();
+      await TenedorDerecho.acquire();
+
+      //Come solo en caso de que ambos tenedores esten disponibles
+      if (TenedorIzquierdo.EstaOcupado && TenedorDerecho.EstaOcupado) {
+        print('$Nombre esta comiendo');
+        TenedorIzquierdo.EstaOcupado = true;
+        TenedorDerecho.EstaOcupado = true;
+
+        Comida--;
+        print('$Nombre comió, quedan ${Comida} bocados');
+
+        //Ya comio, se liberan los tenedores
+        await Future.delayed(Duration(milliseconds: Random().nextInt(500)));
+        TenedorIzquierdo.EstaOcupado = false;
+        TenedorDerecho.EstaOcupado = false;
+      }
+      //En caso de que no esten disponibles ambos tenedores, se liberan ambos
+      else {
+        TenedorIzquierdo.EstaOcupado = false;
+        TenedorDerecho.EstaOcupado = false;
+        print('$Nombre no puede comer, ocupa Tenedores libres');
+      }
+    }
+  }
+}
+
+//Clase tenedor
+class Tenedor {
+  int id;
+  bool EstaOcupado = true;
+
+  Tenedor(this.id) {
+    EstaOcupado = false;
+  }
+
+//Funcion que hace que un tenedor no este disponible
+  Future<void> acquire() async {
+    while (EstaOcupado) {
+      await Future.delayed(Duration(milliseconds: Random().nextInt(300)));
+    }
+    EstaOcupado = true;
+  }
+
+//Funcion que libera los tenedores
+  void release() {
+    EstaOcupado = false;
+  }
+}
+
+void main() async {
+  int n = 3; // Numero de filosofos (y tenedores)
+  List<Filosofo> Filosofos = [];
+  List<Tenedor> Tenedores = [];
+
+  for (int i = 0; i < n; i++) {
+    Tenedor Tenedor2 = Tenedor(i);
+    Tenedores.add(Tenedor2);
+  }
+
+  for (int i = 0; i < n; i++) {
+    Filosofo filosofo = Filosofo(i, 'Filosofo $i', Random().nextInt(10) + 1,
+        Tenedores[i], Tenedores[(i + 1) % n]);
+    Filosofos.add(filosofo);
+  }
+
+  List<Future> futures = [];
+  for (int i = 0; i < n; i++) {
+    futures.add(Filosofos[i].Comer());
+  }
+  await Future.wait(futures);
+}
