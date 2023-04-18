@@ -5,7 +5,7 @@ class Filosofo {
   //Clase filosofos
   int id;
   String Nombre;
-  int Comida;
+  int Comida = 7;
   Tenedor TenedorIzquierdo;
   Tenedor TenedorDerecho;
 
@@ -17,13 +17,14 @@ class Filosofo {
     while (Comida > 0) {
       print('$Nombre esta pensando'); //Filosofo pensando, inicio de la funcion
       await Future.delayed(Duration(
-          milliseconds: Random().nextInt(500))); //permite iniciar la comedera
+          milliseconds: Random().nextInt(100))); //permite iniciar la comedera
 
       await TenedorIzquierdo.acquire();
       await TenedorDerecho.acquire();
 
       //Come solo en caso de que ambos tenedores esten disponibles
-      if (TenedorIzquierdo.EstaOcupado && TenedorDerecho.EstaOcupado) {
+      if ((TenedorIzquierdo.EstaOcupado = true) &&
+          (TenedorDerecho.EstaOcupado = true)) {
         print('$Nombre esta comiendo');
         TenedorIzquierdo.EstaOcupado = true;
         TenedorDerecho.EstaOcupado = true;
@@ -32,7 +33,7 @@ class Filosofo {
         print('$Nombre comió, quedan ${Comida} bocados');
 
         //Ya comio, se liberan los tenedores
-        await Future.delayed(Duration(milliseconds: Random().nextInt(500)));
+        await Future.delayed(Duration(milliseconds: Random().nextInt(1000)));
         TenedorIzquierdo.EstaOcupado = false;
         TenedorDerecho.EstaOcupado = false;
       }
@@ -58,7 +59,7 @@ class Tenedor {
 //Funcion que hace que un tenedor no este disponible
   Future<void> acquire() async {
     while (EstaOcupado) {
-      await Future.delayed(Duration(milliseconds: Random().nextInt(300)));
+      await Future.delayed(Duration(milliseconds: Random().nextInt(1000)));
     }
     EstaOcupado = true;
   }
@@ -70,7 +71,7 @@ class Tenedor {
 }
 
 void main() async {
-  int n = 3; // Numero de filosofos (y tenedores)
+  int n = 5; // Numero de filosofos (y tenedores)
   List<Filosofo> Filosofos = [];
   List<Tenedor> Tenedores = [];
 
@@ -78,16 +79,21 @@ void main() async {
     Tenedor Tenedor2 = Tenedor(i);
     Tenedores.add(Tenedor2);
   }
-
+  int bocados = 7;
   for (int i = 0; i < n; i++) {
-    Filosofo filosofo = Filosofo(i, 'Filosofo $i', Random().nextInt(10) + 1,
-        Tenedores[i], Tenedores[(i + 1) % n]);
+    Filosofo filosofo = Filosofo(
+        i,
+        'Filosofo $i',
+        bocados, //Random().nextInt(comida) + 1,
+        Tenedores[i],
+        Tenedores[(i + 1) % n]);
     Filosofos.add(filosofo);
   }
 
   List<Future> futures = [];
   for (int i = 0; i < n; i++) {
     futures.add(Filosofos[i].Comer());
+    //await Future.wait(futures); //poner aqui el await hace que los filosofos coman en orden ascendente,
   }
   await Future.wait(futures);
 }
